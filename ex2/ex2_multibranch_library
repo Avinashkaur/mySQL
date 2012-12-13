@@ -1,0 +1,112 @@
+mysql> create table branch(
+    -> bcode varchar(10) primary key,
+    -> librarian varchar(20),
+    -> address varchar(50));
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> create table titles( title varchar(20) primary key,
+    -> author varchar(20),
+    -> publisher varchar(30));
+Query OK, 0 rows affected (0.16 sec)
+
+mysql> create table holdings(branch varchar(10), title varchar(20), copies int); 
+Query OK, 0 rows affected (0.16 sec)
+
+mysql> alter table holdings
+    -> add foreign key(branch) references branch(bcode);
+Query OK, 0 rows affected (0.34 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> alter table holdings add foreign key(title) references titles(title);
+Query OK, 0 rows affected (0.33 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> alter table holdings
+    -> add primary key(branch,title);
+Query OK, 0 rows affected (0.31 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> insert into branch values('b2','mary johns','34 pearse St');
+Query OK, 1 row affected (0.07 sec)
+mysql> insert into branch values('b3','francis owens','grange X');
+Query OK, 1 row affected (0.08 sec)
+mysql> insert into titles values('susannah','Ann Brown','Macmillan');
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into titles values('how to fish','Amy Fly','Stop Press');
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into titles values('A history of dublin','David Little','Wiley');Query OK, 1 row affected (0.05 sec)
+mysql> insert into titles values('Computers','Blaise Pascal','Applewoods');Query OK, 1 row affected (0.06 sec)
+mysql> insert into titles values('The Wife','Ann Brown','Macmillan');
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into holdings values('b1','susannah',3);
+Query OK, 1 row affected (0.04 sec)
+mysql> insert into holdings values('b1','how to fish',2);
+Query OK, 1 row affected (0.06 sec)
+mysql> insert into holdings values('b1','A history of dublin',1);
+Query OK, 1 row affected (0.06 sec)
+mysql> insert into holdings values('b2','how to fish',4);
+Query OK, 1 row affected (0.10 sec)
+mysql> insert into holdings values('b2','Computers',2);
+Query OK, 1 row affected (0.06 sec)
+mysql> insert into holdings values('b2','The Wife',3);
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into holdings values('b3','A history of dublin',1);
+Query OK, 1 row affected (0.06 sec)
+mysql> insert into holdings values('b3','Computers',4);
+Query OK, 1 row affected (0.06 sec)
+mysql> insert into holdings values('b3','susannah',3);
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into holdings values('b3','The Wife',1);
+Query OK, 1 row affected (0.05 sec)
+
+//the names of all library books published by Macmillan
+mysql> select distinct holdings.title from  holdings left join titles on holdings.title=titles.title where titles.publisher = 'Macmillan';
++----------+
+| title    |
++----------+
+| susannah |
+| The Wife |
++----------+
+2 rows in set (0.00 sec)
+
+//branches that hold any books by Ann Brown (using a nested subquery).
+mysql> select branch,title from holdings where title in
+    -> (select title from titles where author='Ann Brown');
++--------+----------+
+| branch | title    |
++--------+----------+
+| b1     | susannah |
+| b3     | susannah |
+| b2     | The Wife |
+| b3     | The Wife |
++--------+----------+
+4 rows in set (0.00 sec)
+
+//branches that hold any books by Ann Brown (without using a nested subquery).
+mysql> select holdings.branch,holdings.title from
+    -> titles left join holdings on
+    -> titles.title = holdings.title
+    -> where titles.author = 'Ann Brown';
++--------+----------+
+| branch | title    |
++--------+----------+
+| b1     | susannah |
+| b3     | susannah |
+| b2     | The Wife |
+| b3     | The Wife |
++--------+----------+
+4 rows in set (0.01 sec)
+
+//the total number of books held at each branch
+mysql> select count(distinct holdings.title) as books,holdings.branch
+    -> from titles left join holdings on
+    -> titles.title = holdings.title
+    -> group by holdings.branch;
++-------+--------+
+| books | branch |
++-------+--------+
+|     3 | b1     |
+|     3 | b2     |
+|     4 | b3     |
++-------+--------+
+3 rows in set (0.00 sec)

@@ -1,0 +1,194 @@
+mysql> use exercises
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> create table tastes(
+    -> name varchar(20) not null,
+    -> filing varchar(20) not null); 
+Query OK, 0 rows affected (0.17 sec)
+
+mysql> alter table tastes
+    -> add primary key(name,filing);
+Query OK, 0 rows affected (0.25 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> describe tastes;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| name   | varchar(20) | NO   | PRI | NULL    |       |
+| filing | varchar(20) | NO   | PRI | NULL    |       |
++--------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> create table sandwiches(
+    -> location varchar(50),
+    -> bread varchar(20),
+    -> filing varchar(20),
+    -> price float);
+Query OK, 0 rows affected (0.18 sec)
+
+mysql> alter table sandwiches
+    -> add primary key (location,bread,filing);
+Query OK, 0 rows affected (0.33 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> describe sandwiches;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| location | varchar(50) | NO   | PRI |         |       |
+| bread    | varchar(20) | NO   | PRI |         |       |
+| filing   | varchar(20) | NO   | PRI |         |       |
+| price    | float       | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+
+mysql> create table locations(
+    -> lname varchar(20) primary key,
+    -> phone integer,
+    -> address varchar(50));
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> describe locations;
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| lname   | varchar(20) | NO   | PRI | NULL    |       |
+| phone   | int(11)     | YES  |     | NULL    |       |
+| address | varchar(50) | YES  |     | NULL    |       |
++---------+-------------+------+-----+---------+-------+
+3 rows in set (0.00 sec)
+
+mysql> alter table sandwiches
+    -> add constraint Fk_loc
+    -> foreign key(location) references
+    -> locations(lname);
+Query OK, 0 rows affected (0.31 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> describe sandwiches;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| location | varchar(50) | NO   | PRI |         |       |
+| bread    | varchar(20) | NO   | PRI |         |       |
+| filing   | varchar(20) | NO   | PRI |         |       |
+| price    | float       | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+
+mysql> insert into tastes values(
+    -> 'brown' , 'turkey');
+Query OK, 1 row affected (0.06 sec)
+
+mysql> insert into tastes values( 'brown' , 'beef');
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into tastes values( 'brown' , 'ham');
+Query OK, 1 row affected (0.06 sec)
+
+mysql> insert into tastes values( 'jones' , 'cheese');
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into tastes values( 'green' , 'beef');
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into tastes values( 'green' , 'turkey');
+Query OK, 1 row affected (0.07 sec)
+
+mysql> insert into tastes values( 'green' , 'cheese');
+Query OK, 1 row affected (0.07 sec)
+
+mysql> insert into locations values('lincoln',6834523,'lincoln place');
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into locations values("O'neils",674134,"Pearse St");
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into locations values("old nag",7678132,"Dame St");
+Query OK, 1 row affected (0.08 sec)
+
+mysql> insert into locations values("buttery",7023421,"college St");
+Query OK, 1 row affected (0.07 sec)
+
+mysql> insert into sandwiches values('lincoln','rye','ham',1.25);
+Query OK, 1 row affected (0.07 sec)
+
+mysql> insert into sandwiches values("old nag","rye","beef",1.35);
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into sandwiches values("buttery","white","cheese",1.00);
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into sandwiches values("O'neils","white","turkey",1.35);
+Query OK, 1 row affected (0.05 sec)
+
+mysql> insert into sandwiches values("buttery","white","ham",1.10);
+Query OK, 1 row affected (0.06 sec)
+
+mysql> insert into sandwiches values("lincoln","rye","beef",1.35);
+Query OK, 1 row affected (0.09 sec)
+
+mysql> insert into sandwiches values("lincoln","white","ham",1.30);
+Query OK, 1 row affected (0.08 sec)
+
+mysql> insert into sandwiches values("old nag","rye","ham",1.40);
+Query OK, 1 row affected (0.05 sec)
+
+mysql> select * from sandwiches;
++----------+-------+--------+-------+
+| location | bread | filing | price |
++----------+-------+--------+-------+
+| buttery  | white | cheese |     1 |
+| buttery  | white | ham    |   1.1 |
+| lincoln  | rye   | beef   |  1.35 |
+| lincoln  | rye   | ham    |  1.25 |
+| lincoln  | white | ham    |   1.3 |
+| O'neils  | white | cheese |   1.2 |
+| O'neils  | white | turkey |  1.35 |
+| O'neils  | whole | ham    |  1.25 |
+| old nag  | rye   | beef   |  1.35 |
+| old nag  | rye   | ham    |   1.4 |
++----------+-------+--------+-------+
+10 rows in set (0.00 sec)
+
+//places where jones can eat (using nested subquery)
+
+mysql> select location from sandwiches where filing in (
+    -> select filing from tastes where name='jones');
++----------+
+| location |
++----------+
+| buttery  |
+| O'neils  |
++----------+
+2 rows in set (0.00 sec)
+
+//places where jones can eat without using a nested subquery
+
+mysql> select tastes.name,tastes.filing,sandwiches.location from tastes cross join sandwiches
+    -> on tastes.filing = sandwiches.filing
+    -> where tastes.name = 'jones';
++-------+--------+----------+
+| name  | filing | location |
++-------+--------+----------+
+| jones | cheese | buttery  |
+| jones | cheese | O'neils  |
++-------+--------+----------+
+2 rows in set (0.00 sec)
+
+//for each location the number of people who can eat there.
+
+mysql> select sandwiches.location,count(distinct name) as no_of_people from tastes left join sandwiches on tastes.filing = sandwiches.filing 
+    -> group by location;
++----------+--------------+
+| location | no_of_people |
++----------+--------------+
+| buttery  |            3 |
+| lincoln  |            2 |
+| O'neils  |            3 |
+| old nag  |            2 |
++----------+--------------+
+4 rows in set (0.00 sec)
