@@ -1,0 +1,6 @@
+sushant@sushant-P52F:~$ mysqldump -u root -p exercises > backupfile.sql
+Enter password: 
+
+sushant@sushant-P52F:~$ mysql -u root -p restored < backupfile.sql
+Enter password: 
+
