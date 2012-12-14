@@ -1,0 +1,105 @@
+ select * from Articles;
++---------------------------+--------+-------------+
+| article_name              | author | category    |
++---------------------------+--------+-------------+
+| wifi                      | user3  | IT          |
+| ozone depletion           | user2  | environment |
+| recycle                   | user1  | environment |
+| ivy bridge processor      | user3  | IT          |
+| Artificial Intelligence   | admin2 | Machines    |
+| memory enhancer           | admin2 | Machines    |
+| Green Revolution in India | admin1 | environment |
+| Shooting stars            | user2  | space       |
+| India against Corruption  | user3  | politics    |
++---------------------------+--------+-------------+
+9 rows in set (0.00 sec)
+
+mysql> select * from Comments;
++---------------------------+------------------------------------------+--------+
+| article_name              | comment                                  | user   |
++---------------------------+------------------------------------------+--------+
+| Green Revolution in India | very good                                | user2  |
+| wifi                      | good                                     | user1  |
+| ivy bridge processor      | good efforts                             | admin1 |
+| Green Revolution in India | great!                                   | user3  |
+| memory enhancer           | amazing!                                 | user2  |
+| recycle                   | great efforts!                           | user2  |
+| ivy bridge processor      | great going                              | admin2 |
+| wifi                      | good efforts but need little enhancement | admin2 |
++---------------------------+------------------------------------------+--------+
+8 rows in set (0.00 sec)
+
+//select all articles whose author is user3
+
+mysql> select article_name from Articles
+    -> where author='user3';
++--------------------------+
+| article_name             |
++--------------------------+
+| wifi                     |
+| ivy bridge processor     |
+| India against Corruption |
++--------------------------+
+3 rows in set (0.00 sec)
+
+
+//For all the articles being selected above, select all the articles and also the comments associated with those articles in a single query
+
+mysql> select Articles.article_name,Comments.comment from Articles left join Comments on Articles.article_name = Comments.article_name  where Articles.author = 'user3' and Comments.comment is not null;
++----------------------+------------------------------------------+
+| article_name         | comment                                  |
++----------------------+------------------------------------------+
+| wifi                 | good                                     |
+| wifi                 | good efforts but need little enhancement |
+| ivy bridge processor | good efforts                             |
+| ivy bridge processor | great going                              |
++----------------------+------------------------------------------+
+4 rows in set (0.00 sec)
+
+//Write a query to select all articles which do not have any comments
+
+mysql> select Articles.article_name from Articles left join Comments on Articles.article_name = Comments.article_name  where Comments.comment is null;+--------------------------+
+| article_name             |
++--------------------------+
+| ozone depletion          |
+| Artificial Intelligence  |
+| Shooting stars           |
+| India against Corruption |
++--------------------------+
+4 rows in set (0.00 sec)
+
+//Write a query to select article which has maximum comments
+
+mysql> select article_name,@maxprice := max(no_of_comments) as maxprice from (select article_name,count(distinct comment) as no_of_comments from Comments group by article_name) as tmp where no_of_comments=@maxprice;
++----------------------+----------+
+| article_name         | maxprice |
++----------------------+----------+
+| ivy bridge processor |        3 |
++----------------------+----------+
+1 row in set (0.00 sec)
+
+//Write a query to select article which does not have more than one comment by the same user ( do this using left join and also do it using group by)
+
+mysql> select temp.*,count(comment) as no_of_comments from (select * from Articles left join Comments using(article_name)) as temp group by article_name,user having `no_of_comments`=0 OR `no_of_comments`=1;
++---------------------------+--------+-------------+------------------------------------------+--------+----------------+
+| article_name              | author | category    | comment                                  | user   | no_of_comments |
++---------------------------+--------+-------------+------------------------------------------+--------+----------------+
+| Artificial Intelligence   | admin2 | Machines    | NULL                                     | NULL   |              0 |
+| Green Revolution in India | admin1 | environment | great!                                   | user3  |              1 |
+| India against Corruption  | user3  | politics    | NULL                                     | NULL   |              0 |
+| ivy bridge processor      | user3  | IT          | good efforts                             | admin1 |              1 |
+| ivy bridge processor      | user3  | IT          | great going                              | admin2 |              1 |
+| ivy bridge processor      | user3  | IT          | very nicely written sir!                 | user2  |              1 |
+| memory enhancer           | admin2 | Machines    | amazing!                                 | user2  |              1 |
+| ozone depletion           | user2  | environment | NULL                                     | NULL   |              0 |
+| recycle                   | user1  | environment | great efforts!                           | user2  |              1 |
+| Shooting stars            | user2  | space       | NULL                                     | NULL   |              0 |
+| wifi                      | user3  | IT          | good efforts but need little enhancement | admin2 |              1 |
+| wifi                      | user3  | IT          | good                                     | user1  |              1 |
++---------------------------+--------+-------------+------------------------------------------+--------+----------------+
+12 rows in set (0.00 sec)
+
+
+
+
+
