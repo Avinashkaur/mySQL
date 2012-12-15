@@ -1,0 +1,216 @@
+Q.1: 
+EXPLAIN returns a row of information for each table used in the SELECT statement. 
+It lists the tables in the output in the order that MySQL would read them while processing the statement.
+MySQL resolves all joins using a nested-loop join method. This means that MySQL reads a row from the first table, and then finds a matching row in the second table, the third table, and so on. 
+When all tables are processed, MySQL outputs the selected columns and backtracks through the table list until a table is found for which there are more matching rows. The next row is read from this table and the process continues with the next table. 
+
+Each output row from EXPLAIN provides information about one table:
+
+EXPLAIN Output Columns             Column	Meaning
+id	                            The SELECT identifier
+select_type	                    The SELECT type
+table	                          The table for the output row
+partitions	                    The matching partitions
+type	                          The join type
+possible_keys	                  The possible indexes to choose
+key	                            The index actually chosen
+key_len	                        The length of the chosen key
+ref	                            The columns compared to the index
+rows	                          Estimate of rows to be examined
+filtered	                      Percentage of rows filtered by table condition
+Extra	                          Additional information
+
+1. id:
+The SELECT identifier. This is the sequential number of the SELECT within the query. The value can be NULL if the row refers to the union result of other rows. In this case, the table column shows a value like <unionM,N> to indicate that the row refers to the union of the rows with id values of M and N.
+
+2. select_type:
+The type of SELECT, which can be any of those shown in the following table.
+
+select_type (Value)    	              Meaning
+-----------------------------------------------------------------------------------------------------------------------------------------
+SIMPLE	                Simple SELECT (not using UNION or subqueries)
+PRIMARY               	Outermost SELECT
+UNION	                  Second or later SELECT statement in a UNION
+DEPENDENT UNION	        Second or later SELECT statement in a UNION, dependent on outer query
+UNION RESULT	          Result of a UNION.
+SUBQUERY	              First SELECT in subquery
+DEPENDENT SUBQUERY	    First SELECT in subquery, dependent on outer query
+DERIVED	                Derived table SELECT (subquery in FROM clause)
+UNCACHEABLE SUBQUERY    A subquery for which the result cannot be cached and must be re-evaluated for each row of the outer query
+UNCACHEABLE UNION	      The second or later select in a UNION that belongs to an uncacheable subquery
+------------------------------------------------------------------------------------------------------------------------------------------
+
+DEPENDENT typically signifies the use of a correlated subquery.
+DEPENDENT SUBQUERY evaluation differs from UNCACHEABLE SUBQUERY evaluation.
+For DEPENDENT SUBQUERY, the subquery is re-evaluated only once for each set of different values of the variables from its outer context. For UNCACHEABLE SUBQUERY, the subquery is re-evaluated for each row of the outer context.
+Cacheability of subqueries differs from caching of query results in the query cache. Subquery caching occurs during query execution, whereas the query cache is used to store results only after query execution finishes.
+
+3. table:
+The name of the table to which the row of output refers. This can also be one of the following values:
+<unionM,N>: The row refers to the union of the rows with id values of M and N.
+<derivedN>: The row refers to the derived table result for the row with an id value of N. A derived table may result, for example, from a subquery in the FROM clause. 
+
+4. partitions:
+The partitions from which records would be matched by the query. This column is displayed only if the PARTITIONS keyword is used. The value is NULL for nonpartitioned tables.
+
+5. type:
+The join type.
+
+6. possible_keys:
+The possible_keys column indicates which indexes MySQL can choose from use to find the rows in this table. Note that this column is totally independent of the order of the tables as displayed in the output from EXPLAIN. That means that some of the keys in possible_keys might not be usable in practice with the generated table order.
+
+7. key:
+The key column indicates the key (index) that MySQL actually decided to use. If MySQL decides to use one of the possible_keys indexes to look up rows, that index is listed as the key value.
+
+    It is possible that key will name an index that is not present in the possible_keys value. This can happen if none of the possible_keys indexes are suitable for looking up rows, but all the columns selected by the query are columns of some other index. That is, the named index covers the selected columns, so although it is not used to determine which rows to retrieve, an index scan is more efficient than a data row scan.
+    For InnoDB, a secondary index might cover the selected columns even if the query also selects the primary key because InnoDB stores the primary key value with each secondary index. If key is NULL, MySQL found no index to use for executing the query more efficiently.
+    To force MySQL to use or ignore an index listed in the possible_keys column, use FORCE INDEX, USE INDEX, or IGNORE INDEX in your query.
+    For MyISAM and NDB tables, running ANALYZE TABLE helps the optimizer choose better indexes. For MyISAM tables, myisamchk --analyze does the same as ANALYZE TABLE. 
+
+8. key_len:
+The key_len column indicates the length of the key that MySQL decided to use. The length is NULL if the key column says NULL. Note that the value of key_len enables you to determine how many parts of a multiple-part key MySQL actually uses.
+
+9. ref:
+The ref column shows which columns or constants are compared to the index named in the key column to select rows from the table.
+
+10. rows:
+The rows column indicates the number of rows MySQL believes it must examine to execute the query.For InnoDB tables, this number is an estimate, and may not always be exact.
+
+11. filtered:
+The filtered column indicates an estimated percentage of table rows that will be filtered by the table condition. That is, rows shows the estimated number of rows examined and rows × filtered / 100 shows the number of rows that will be joined with previous tables. This column is displayed if you use EXPLAIN EXTENDED.
+    
+12. Extra:
+This column contains additional information about how MySQL resolves the query.
+
+
+Q.2:
+mysql> EXPLAIN SELECT * FROM comments WHERE user_id = 41;
+
++-------------+------+---------------+---------+-------+---------+-------------+
+| select_type | type | key | key_len | ref | rows | Extra |
++-------------+------+---------------+---------+-------+---------+-------------+
+| SIMPLE | ALL | NULL | NULL | NULL | 1002345 | Using where |
++-------------+------+---------------+---------+-------+---------+-------------+
+
+mysql> SELECT count(id) FROM comments;
+
++-----------+
+| count(id) |
++-----------+
+| 1002345 |
++-----------+
+
+2.1 The value under 'rows' column in the output of EXPLAIN query and SELECT query after it are same. What does it mean?
+The value under 'rows' column in the output of EXPLAIN query indicates the number of rows MySql should examine to execute the query.
+The count(id) returns the number of rows containing the value for column id.
+
+2.2 Is the SELECT query optimal? If no, how do we optimize it?
+
+In high-traffic database-driven applications, a single badly-designed SQL query can significantly impact the overall performance of your application. Not only does such a query consume more database time than it ideally should, but it can have an exponential effect on the performance of other application components.
+
+Optimizing query performance is as much a black art as a science, as heavily dependent on the developer's intuition as on hard statistical performance data. Fortunately, databases likes MySQL come with some tools to aid the process of optimizing, and this article discusses three of them briefly: using indexes, analyzing queries with EXPLAIN, and adjusting MySQL's internal configuration.
+#1: Using indexes:
+MySQL allows you to index database tables, making it possible to quickly seek to records without performing a full table scan first and thus significantly speeding up query execution.
+
+Example:
+mysql> CREATE INDEX idx_username ON users(username);
+Query OK, 1 row affected (0.15 sec)
+Records: 1  Duplicates: 0  Warnings: 0
+
+Here, indexing the username field of the users table ensures that SELECT queries which reference this field in their WHERE or HAVING clause will run a little faster than in the pre-indexed state. 
+
+#2: Optimizing query performance
+When analyzing query performance, it's also useful to consider the EXPLAIN keyword. This keyword, when placed in front of a SELECT query, describes how MySQL intends to execute the query and the number of rows it will need to process to successfully deliver a result set.
+
+3.1
+Fistly we will index user_id,then commendable_id and finally commendable_name
+
+4.1
+
+mysql> select * from titles inner join holdings using(title);
++---------------------+---------------+------------+--------+--------+
+| title               | author        | publisher  | branch | copies |
++---------------------+---------------+------------+--------+--------+
+| A history of dublin | David Little  | Wiley      | b1     |      1 |
+| A history of dublin | David Little  | Wiley      | b3     |      1 |
+| Computers           | Blaise Pascal | Applewoods | b2     |      2 |
+| Computers           | Blaise Pascal | Applewoods | b3     |      4 |
+| how to fish         | Amy Fly       | Stop Press | b1     |      2 |
+| how to fish         | Amy Fly       | Stop Press | b2     |      4 |
+| susannah            | Ann Brown     | Macmillan  | b1     |      3 |
+| susannah            | Ann Brown     | Macmillan  | b3     |      3 |
+| The Wife            | Ann Brown     | Macmillan  | b2     |      3 |
+| The Wife            | Ann Brown     | Macmillan  | b3     |      1 |
++---------------------+---------------+------------+--------+--------+
+10 rows in set (0.00 sec)
+
+mysql> explain select * from titles inner join holdings using(title);
++----+-------------+----------+------+---------------+-------+---------+------------------------+------+-------+
+| id | select_type | table    | type | possible_keys | key   | key_len | ref                    | rows | Extra |
++----+-------------+----------+------+---------------+-------+---------+------------------------+------+-------+
+|  1 | SIMPLE      | titles   | ALL  | PRIMARY       | NULL  | NULL    | NULL                   |    5 |       |
+|  1 | SIMPLE      | holdings | ref  | title         | title | 22      | exercises.titles.title |    1 |       |
++----+-------------+----------+------+---------------+-------+---------+------------------------+------+-------+
+2 rows in set (0.01 sec)
+
+id:tells the sequential number of the SELECT within the query.
+select_type: type of select..in this cae, it is simple(not using union)
+table:name of the table used.
+type:indicates the join type
+posible_keys:indicates which indexes MySQL can choose from use to find the rows in this table. 
+key: indicates the key (index) that MySQL actually decided to use.
+key_len:indicates the length of the key that MySQL decided to use.
+ref:shows which columns or constants are compared to the index named in the key column to select rows from the table.
+rows:The rows column indicates the number of rows MySQL believes it must examine to execute the query.
+extra:additional info given during query execution.
+We got 2 rows in explain's output.
+
+4.2
+
+mysql> select * from holdings, (select * from titles) as tmp where holdings.title=tmp.title;
++--------+---------------------+--------+---------------------+---------------+------------+
+| branch | title               | copies | title               | author        | publisher  |
++--------+---------------------+--------+---------------------+---------------+------------+
+| b1     | A history of dublin |      1 | A history of dublin | David Little  | Wiley      |
+| b3     | A history of dublin |      1 | A history of dublin | David Little  | Wiley      |
+| b2     | Computers           |      2 | Computers           | Blaise Pascal | Applewoods |
+| b3     | Computers           |      4 | Computers           | Blaise Pascal | Applewoods |
+| b1     | how to fish         |      2 | how to fish         | Amy Fly       | Stop Press |
+| b2     | how to fish         |      4 | how to fish         | Amy Fly       | Stop Press |
+| b1     | susannah            |      3 | susannah            | Ann Brown     | Macmillan  |
+| b3     | susannah            |      3 | susannah            | Ann Brown     | Macmillan  |
+| b2     | The Wife            |      3 | The Wife            | Ann Brown     | Macmillan  |
+| b3     | The Wife            |      1 | The Wife            | Ann Brown     | Macmillan  |
++--------+---------------------+--------+---------------------+---------------+------------+
+10 rows in set (0.00 sec)
+
+mysql> select * from holdings, titles where holdings.title in (select title from titles) and holdings.title = titles.title;
++--------+---------------------+--------+---------------------+---------------+------------+
+| branch | title               | copies | title               | author        | publisher  |
++--------+---------------------+--------+---------------------+---------------+------------+
+| b1     | A history of dublin |      1 | A history of dublin | David Little  | Wiley      |
+| b3     | A history of dublin |      1 | A history of dublin | David Little  | Wiley      |
+| b2     | Computers           |      2 | Computers           | Blaise Pascal | Applewoods |
+| b3     | Computers           |      4 | Computers           | Blaise Pascal | Applewoods |
+| b1     | how to fish         |      2 | how to fish         | Amy Fly       | Stop Press |
+| b2     | how to fish         |      4 | how to fish         | Amy Fly       | Stop Press |
+| b1     | susannah            |      3 | susannah            | Ann Brown     | Macmillan  |
+| b3     | susannah            |      3 | susannah            | Ann Brown     | Macmillan  |
+| b2     | The Wife            |      3 | The Wife            | Ann Brown     | Macmillan  |
+| b3     | The Wife            |      1 | The Wife            | Ann Brown     | Macmillan  |
++--------+---------------------+--------+---------------------+---------------+------------+
+10 rows in set (0.00 sec)
+mysql> explain select * from holdings, titles where holdings.title in (select title from titles) and holdings.title = titles.title;
++----+--------------------+----------+-----------------+---------------+---------+---------+------------------------+------+-------------+
+| id | select_type        | table    | type            | possible_keys | key     | key_len | ref                    | rows | Extra       |
++----+--------------------+----------+-----------------+---------------+---------+---------+------------------------+------+-------------+
+|  1 | PRIMARY            | titles   | ALL             | PRIMARY       | NULL    | NULL    | NULL                   |    5 |             |
+|  1 | PRIMARY            | holdings | ref             | title         | title   | 22      | exercises.titles.title |    1 | Using where |
+|  2 | DEPENDENT SUBQUERY | titles   | unique_subquery | PRIMARY       | PRIMARY | 22      | func                   |    1 | Using index |
++----+--------------------+----------+-----------------+---------------+---------+---------+------------------------+------+-------------+
+3 rows in set (0.00 sec)
+
+The query using inner join is better than the subquery. 
+
+
+
