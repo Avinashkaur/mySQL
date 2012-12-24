@@ -5,7 +5,7 @@ mysql> create user 'vtapp_user'@'localhost'
     -> identified by 'vtapp';
 Query OK, 0 rows affected (0.00 sec)
 
-mysql> grant all
+mysql> grant insert,create,select,update,delete,drop
     -> on vtapp.*
     -> to 'vtapp_user'@'localhost';
 Query OK, 0 rows affected (0.00 sec)
