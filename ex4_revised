@@ -1,0 +1,104 @@
+mysql> select * from comments;
++------+---------------------------+---------------------------------------------+--------+
+| id   | name                      | comment                                     | user   |
++------+---------------------------+---------------------------------------------+--------+
+| a7   | Green Revolution in India | very good                                   | user2  |
+| a1   | wifi                      | good                                        | user1  |
+| a4   | ivy bridge processor      | good efforts                                | admin1 |
+| a7   | Green Revolution in India | great                                       | user3  |
+| a6   | Memory Enhancer           | amazing                                     | user2  |
+| a3   | recycle                   | great efforts!                              | user2  |
+| a4   | ivy bridge processor      | great going                                 | admin2 |
+| a1   | wifi                      | good efforts but needs a little improvement | admin2 |
++------+---------------------------+---------------------------------------------+--------+
+8 rows in set (0.00 sec)
+mysql> select * from comments;
++------+---------------------------------------------+--------+
+| id   | comment                                     | user   |
++------+---------------------------------------------+--------+
+| a7   | very good                                   | user2  |
+| a1   | good                                        | user1  |
+| a4   | good efforts                                | admin1 |
+| a7   | great                                       | user3  |
+| a6   | amazing                                     | user2  |
+| a3   | great efforts!                              | user2  |
+| a4   | great going                                 | admin2 |
+| a1   | good efforts but needs a little improvement | admin2 |
+| a4   | section 1 and 4 highly important            | admin1 |
++------+---------------------------------------------+--------+
+9 rows in set (0.00 sec)
+
+
+//select all articles whose author is user3
+mysql> select name from articles
+    -> where author = 'user3';
++--------------------------+
+| name                     |
++--------------------------+
+| wifi                     |
+| ivy bridge processor     |
+| India against Corruption |
++--------------------------+
+3 rows in set (0.00 sec)
+
+//For all the articles being selected above, select all the articles and also the comments associated with those articles in a single query
+mysql> select articles.name,comments.comment from articles left join comments
+    -> using (id)
+    -> where articles.author = 'user3'
+    -> and comments.comment is not null;
++----------------------+---------------------------------------------+
+| name                 | comment                                     |
++----------------------+---------------------------------------------+
+| wifi                 | good                                        |
+| ivy bridge processor | good efforts                                |
+| ivy bridge processor | great going                                 |
+| wifi                 | good efforts but needs a little improvement |
+| ivy bridge processor | section 1 and 4 highly important            |
++----------------------+---------------------------------------------+
+5 rows in set (0.00 sec)
+
+
+//Write a query to select all articles which do not have any comments
+
+mysql> select articles.name,comments.comment from articles left join comments using (id) where comments.comment is null;
++--------------------------+---------+
+| name                     | comment |
++--------------------------+---------+
+| ozone depletion          | NULL    |
+| Artificial Intelligence  | NULL    |
+| Shooting Stars           | NULL    |
+| India against Corruption | NULL    |
++--------------------------+---------+
+4 rows in set (0.00 sec)
+
+
+//Write a query to select article which has maximum comments
+mysql> select name,@maxcomment := MAX(no_of_comments) from (select *,count(distinct comment) as no_of_comments from comments left join articles using(id) group by id) as tmp_usr where no_of_comments=@maxcomment; 
++----------------------+------------------------------------+
+| name                 | @maxcomment := MAX(no_of_comments) |
++----------------------+------------------------------------+
+| ivy bridge processor |                                  3 |
++----------------------+------------------------------------+
+1 row in set (0.00 sec)
+
+//Write a query to select article which does not have more than one comment by the same user ( do this using left join and also do it using group by)
+mysql> select tmp_user.*,count(comment) as no_of_comments from (select * from articles left join comments using(id)) as tmp_user group by tmp_user.name having `no_of_comments` = 0 OR `no_of_comments` = 1;
++----+--------------------------+--------+-------------+----------------+-------+----------------+
+| id | name                     | author | category    | comment        | user  | no_of_comments |
++----+--------------------------+--------+-------------+----------------+-------+----------------+
+| a5 | Artificial Intelligence  | admin2 | Machines    | NULL           | NULL  |              0 |
+| a9 | India against Corruption | user3  | politics    | NULL           | NULL  |              0 |
+| a6 | Memory Enhancer          | admin2 | Machines    | amazing        | user2 |              1 |
+| a2 | ozone depletion          | user2  | environment | NULL           | NULL  |              0 |
+| a3 | recycle                  | user1  | environment | great efforts! | user2 |              1 |
+| a8 | Shooting Stars           | user2  | space       | NULL           | NULL  |              0 |
++----+--------------------------+--------+-------------+----------------+-------+----------------+
+6 rows in set (0.00 sec)
+
+
+
+
+
+
+
+
