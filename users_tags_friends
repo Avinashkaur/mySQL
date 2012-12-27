@@ -1,0 +1,184 @@
+mysql> desc users;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| id    | varchar(10) | NO   | PRI | NULL    |       |
+| name  | varchar(30) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> desc friends;
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| user_id | varchar(10) | YES  | MUL | NULL    |       |
+| friend  | varchar(10) | YES  | MUL | NULL    |       |
++---------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> desc images;
++------------+-------------+------+-----+---------+-------+
+| Field      | Type        | Null | Key | Default | Extra |
++------------+-------------+------+-----+---------+-------+
+| id         | varchar(10) | NO   | PRI | NULL    |       |
+| image_user | varchar(10) | YES  | MUL | NULL    |       |
++------------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> desc tags;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| image_id | varchar(10) | YES  |     | NULL    |       |
+| tagged   | varchar(10) | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> select * from users;
++-----+---------+
+| id  | name    |
++-----+---------+
+| a1  | Avinash |
+| a10 | Ajay    |
+| a2  | Inder   |
+| a3  | Aman    |
+| a4  | Nanny   |
+| a5  | Neha    |
+| a6  | Sakshi  |
+| a7  | Vinay   |
+| a8  | Shelley |
+| a9  | Sania   |
++-----+---------+
+10 rows in set (0.00 sec)
+
+mysql> select * from friends;
++---------+--------+
+| user_id | friend |
++---------+--------+
+| a8      | a5     |
+| a2      | a10    |
+| a5      | a2     |
+| a3      | a5     |
+| a1      | a9     |
+| a5      | a10    |
+| a1      | a8     |
+| a1      | a3     |
+| a8      | a3     |
+| a9      | a4     |
++---------+--------+
+10 rows in set (0.00 sec)
+
+mysql> select * from images;
++-----+------------+
+| id  | image_user |
++-----+------------+
+| i9  | a1         |
+| i4  | a10        |
+| i8  | a2         |
+| i3  | a4         |
+| i7  | a4         |
+| i5  | a5         |
+| i10 | a6         |
+| i2  | a6         |
+| i1  | a8         |
+| i6  | a8         |
++-----+------------+
+10 rows in set (0.00 sec)
+
+mysql> select * from tags;
++----------+--------+
+| image_id | tagged |
++----------+--------+
+| i4       | a8     |
+| i4       | a4     |
+| i4       | a10    |
+| i2       | a5     |
+| i2       | a3     |
+| i2       | a7     |
+| i2       | a2     |
+| i5       | a1     |
+| i5       | a3     |
+| i5       | a8     |
+| i9       | a3     |
+| i9       | a9     |
+| i9       | a2     |
+| i9       | a1     |
+| i6       | a1     |
+| i6       | a8     |
+| i6       | a5     |
+| i10      | a6     |
+| i10      | a7     |
+| i3       | a4     |
+| i3       | a10    |
+| i3       | a9     |
+| i1       | a9     |
+| i1       | a4     |
+| i7       | a9     |
++----------+--------+
+25 rows in set (0.00 sec)
+
+
+//1) Find image that has been tagged most no of times.
+
+mysql> create table tmp_maxtagged select image_id,count(tagged) as no_of_times_taged from tags group by image_id;
+mysql> select * from tmp_maxtagged;
++----------+-------------------+
+| image_id | no_of_times_taged |
++----------+-------------------+
+| i1       |                 2 |
+| i10      |                 2 |
+| i2       |                 4 |
+| i3       |                 3 |
+| i4       |                 3 |
+| i5       |                 3 |
+| i6       |                 3 |
+| i7       |                 1 |
+| i9       |                 4 |
++----------+-------------------+
+9 rows in set (0.00 sec)
+
+mysql> select image_id,no_of_times_taged from tmp_maxtagged where no_of_times_taged = (select MAX(no_of_times_taged) from tmp_maxtagged);+----------+-------------------+
+| image_id | no_of_times_taged |
++----------+-------------------+
+| i2       |                 4 |
+| i9       |                 4 |
++----------+-------------------+
+2 rows in set (0.00 sec)
+
+
+//2) Find all images belonging to the friends of a particular user.
+
+mysql> select user_id,friend,id from friends inner join images on friends.friend = images.image_user order by user_id;
++---------+--------+----+
+| user_id | friend | id |
++---------+--------+----+
+| a1      | a8     | i1 |
+| a1      | a8     | i6 |
+| a2      | a10    | i4 |
+| a3      | a5     | i5 |
+| a5      | a10    | i4 |
+| a5      | a2     | i8 |
+| a8      | a5     | i5 |
+| a9      | a4     | i3 |
+| a9      | a4     | i7 |
++---------+--------+----+
+9 rows in set (0.00 sec)
+
+//3)Find all friends of  a particular user (e.g a9) who has tagged him in all his pics.
+mysql> select distinct users.name from friends join images join tags join users on image_user = friend where images.image_user in (Select friends.friend from friends where user_id = 'a9') AND tags.image_id = images.id AND tags.tagged = user_id AND users.id = user_id group by images.id;
++-------+
+| name  |
++-------+
+| Sania |
++-------+
+1 row in set (0.00 sec)
+
+//4) Find friend of a particular user (Say, userA) who have tagged him most no. of times.
+
+mysql> select users.name,count(distinct image_id) as "total_tags" from friends join images join tags join users on image_user = friend where images.id = tags.image_id AND tagged = user_id AND users.id = friend AND image_user in (select friend from friends where user_id = 'a8') group by image_user order by count(distinct image_id);
++------+------------+
+| name | total_tags |
++------+------------+
+| Neha |          1 |
++------+------------+
+1 row in set (0.00 sec)
