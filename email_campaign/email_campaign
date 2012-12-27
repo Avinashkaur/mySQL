@@ -1,0 +1,95 @@
+mysql> load data infile '/home/sushant/mysql/email_campaign/data.csv' into table email_campaign fields terminated by ',' lines terminated by '\n' (email,phone,city);
+Query OK, 201 rows affected, 2 warnings (0.04 sec)
+Records: 201  Deleted: 0  Skipped: 0  Warnings: 2
+
+//What all cities did people respond from
+mysql> select distinct city from email_campaign;
++-----------+
+| city      |
++-----------+
+|  Lucknow  |
+|  Chennai  |
+|  Kolkatta |
+|  Delhi    |
+|  Mumbai   |
++-----------+
+5 rows in set (0.00 sec)
+
+//How many people responded from each city
+
+mysql> select city,count(distinct email) from email_campaign
+    -> group by city;
++-----------+-----------------------+
+| city      | count(distinct email) |
++-----------+-----------------------+
+|  Chennai  |                    42 |
+|  Delhi    |                    40 |
+|  Kolkatta |                    38 |
+|  Lucknow  |                    39 |
+|  Mumbai   |                    41 |
++-----------+-----------------------+
+5 rows in set (0.00 sec)
+
+//Which city were the maximum respondents from?
+mysql> create table tmp_responses select city,count(distinct email) as no_of_responses from email_campaign group by city;  
+Query OK, 5 rows affected (0.26 sec)
+Records: 5 Duplicates: 0  Warnings: 0
+mysql> select * from tmp_responses;
++-----------+-----------------+
+| city      | no_of_responses |
++-----------+-----------------+
+|  Chennai  |              42 |
+|  Delhi    |              40 |
+|  Kolkatta |              38 |
+|  Lucknow  |              39 |
+|  Mumbai   |              41 |
++-----------+-----------------+
+5 rows in set (0.00 sec)
+
+mysql> select city,no_of_responses from tmp_responses where
+    -> no_of_responses = (select max(no_of_responses) from tmp_responses);
++----------+-----------------+
+| city     | no_of_responses |
++----------+-----------------+
+|  Chennai |              42 |
++----------+-----------------+
+1 row in set (0.00 sec)
+
+//What all email domains did people respond from ?
+
+mysql> select distinct substring_index(email,'@',-1) as C1 from email_campaign;
++--------------+
+| C1           |
++--------------+
+| hotmail.com  |
+| yahoo.com    |
+| me.com       |
+| gmail.com    |
++--------------+
+4 rows in set (0.00 sec)
+
+//Which is the most popular email domain among the respondents ?
+
+mysql> create table tmp_resp select domain_name,count(*) as no_of_users from (select substring_index(email,'@',-1) as domain_name from email_campaign) as tmp group by tmp.domain_name; 
+Query OK, 4 rows affected (0.25 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> select * from tmp_resp;
++--------------+-------------+
+| domain_name  | no_of_users |
++--------------+-------------+
+| gmail.com    |          98 |
+| hotmail.com  |          98 |
+| me.com       |         102 |
+| yahoo.com    |         102 |
++--------------+-------------+
+4 rows in set (0.00 sec)
+
+mysql> select domain_name,no_of_users from tmp_resp where no_of_users = (select max(no_of_users) from tmp_resp);
++-------------+-------------+
+| domain_name | no_of_users |
++-------------+-------------+
+| me.com      |         102 |
+| yahoo.com   |         102 |
++-------------+-------------+
+2 rows in set (0.00 sec)
