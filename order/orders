@@ -1,0 +1,95 @@
+mysql> create table orders(
+    -> orderNumber int,
+    -> orderDate date,
+    -> requiredDate date,
+    -> shippedDate date,
+    -> status varchar(20),
+    -> comment varchar(50),
+    -> customerNumber int)
+    -> ;
+Query OK, 0 rows affected (0.17 sec)
+
+mysql> create table orderDetails(
+    -> orderNumber int,
+    -> quantityOrdered int,
+    -> requiredDate date,
+    -> priceEach float,
+    -> orderLineNumber int);
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> alter table orders
+    -> add primary key(orderNumber);
+Query OK, 0 rows affected (0.33 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> alter table orderDetails
+    -> add foreign key(orderNumber) references orders(orderNumber);
+Query OK, 0 rows affected (0.54 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> select * from orderDetails;
++-------------+-----------------+--------------+-----------+-----------------+
+| orderNumber | quantityOrdered | requiredDate | priceEach | orderLineNumber |
++-------------+-----------------+--------------+-----------+-----------------+
+|         231 |               1 | 2012-11-21   |     21000 | 5               |
+|         163 |               5 | 2012-11-19   |      1020 | 3               |
+|         123 |               2 | 2012-11-14   |       899 | 1               |
+|         182 |               6 | 2012-11-19   |      2349 | 4               |
+|         156 |               1 | 2012-11-17   |      3599 | 2               |
+|         245 |             610 | 2012-11-19   |      2499 | 6               |
++-------------+-----------------+--------------+-----------+-----------------+
+6 rows in set (0.00 sec)
+
+mysql> select * from orders;
++-------------+------------+--------------+-------------+--------------+---------------+----------------+
+| orderNumber | orderDate  | requiredDate | shippedDate | status       | comment       | customerNumber |
++-------------+------------+--------------+-------------+--------------+---------------+----------------+
+|         123 | 2012-11-12 | 2012-11-14   | 2012-11-13  | dispatched   | blue shirt    |           2314 |
+|         156 | 2012-11-16 | 2012-11-17   | 2012-11-17  | dispatched   | reebok shoes  |            897 |
+|         163 | 2012-11-16 | 2012-11-19   | 2012-11-17  | not in stock | salwar kameez |            768 |
+|         182 | 2012-11-17 | 2012-11-19   | 2012-11-17  | dispatched   | headphones    |           6547 |
+|         231 | 2012-11-18 | 2012-11-21   | 2012-11-20  | waiting      | dining set    |           8764 |
+|         245 | 2012-11-16 | 2012-11-19   | 2012-11-17  | waiting      | denim         |            542 |
++-------------+------------+--------------+-------------+--------------+---------------+----------------+
+6 rows in set (0.00 sec)
+
+
+a) Get all orders, number of items sold and total values in each order
+
+mysql> select orderNumber,quantityOrdered as no_of_items_sold,priceEach * quantityOrdered as total_value from orderDetails;
++-------------+------------------+-------------+
+| orderNumber | no_of_items_sold | total_value |
++-------------+------------------+-------------+
+|         231 |                1 |       21000 |
+|         163 |                5 |        5100 |
+|         123 |                2 |        1798 |
+|         182 |                6 |       14094 |
+|         156 |                1 |        3599 |
+|         245 |              610 |     1524390 |
++-------------+------------------+-------------+
+6 rows in set (0.00 sec)
+
+ b)what order has total value greater than $1000
+ mysql> select * from (select orderNumber,quantityOrdered as no_of_items_sold,priceEach * quantityOrdered as total_value from orderDetails) as tmp  where total_value > 1000;
+mysql> select * from (select orderNumber,quantityOrdered as no_of_items_sold,priceEach * quantityOrdered as total_value from orderDetails) as tmp  where total_value > 1000;
++-------------+------------------+-------------+
+| orderNumber | no_of_items_sold | total_value |
++-------------+------------------+-------------+
+|         231 |                1 |       21000 |
+|         163 |                5 |        5100 |
+|         123 |                2 |        1798 |
+|         182 |                6 |       14094 |
+|         156 |                1 |        3599 |
+|         245 |              610 |     1524390 |
++-------------+------------------+-------------+
+6 rows in set (0.00 sec)
+
+c)what order has total value greater than $1000 and has more than 600 items in it
+
+mysql> select * from (select orderNumber,quantityOrdered as no_of_items_sold,priceEach * quantityOrdered as total_value from orderDetails) as tmp  where total_value > 1000 AND no_of_items_sold > 600;
++-------------+------------------+-------------+
+| orderNumber | no_of_items_sold | total_value |
++-------------+------------------+-------------+
+|         245 |              610 |     1524390 |
++-------------+------------------+-------------+
+1 row in set (0.00 sec)
