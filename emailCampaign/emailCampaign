@@ -31,7 +31,9 @@ mysql> select city,count(distinct email) from email_campaign
 5 rows in set (0.00 sec)
 
 //Which city were the maximum respondents from?
-mysql> select city,no_of_responses from (select city,count(distinct email) as no_of_responses from emailCampaign group by city) as tmp where no_of_responses = (select max(no_of_responses) from (select city,count(distinct email) as no_of_responses from emailCampaign group by city) as tmp1);
+mysql> select city,count(distinct email) as no_of_responses from emailCampaign group by city having no_of_responses = (select max(no_of_responses) from (select city,count(distinct email) as no_of_responses from emailCampaign group by city) as tmp);
+
+
 +----------+-----------------+
 | city     | no_of_responses |
 +----------+-----------------+
@@ -54,7 +56,7 @@ mysql> select distinct substring_index(email,'@',-1) as C1 from email_campaign;
 
 //Which is the most popular email domain among the respondents ?
 
-mysql> select domain_name,no_of_users from (select domain_name,count(*) as no_of_users from (select substring_index(email,'@',-1) as domain_name from emailCampaign) as tmp group by tmp.domain_name) as tmp1 where no_of_users = (select max(no_of_users) from (select domain_name,count(*) as no_of_users from (select substring_index(email,'@',-1) as domain_name from emailCampaign) as tmp group by tmp.domain_name) as tmp1);
+mysql>select domain_name,count(*) as no_of_users from (select substring_index(email,'@',-1) as domain_name from emailCampaign) as tmp group by tmp.domain_name having no_of_users = (select max(no_of_users) from (select domain_name,count(*) as no_of_users from (select substring_index(email,'@',-1) as domain_name from emailCampaign) as tmp group by tmp.domain_name) as tmp1);
 +-------------+-------------+
 | domain_name | no_of_users |
 +-------------+-------------+

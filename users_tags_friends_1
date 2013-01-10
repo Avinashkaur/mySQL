@@ -1,0 +1,102 @@
+mysql> desc users;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| id    | int(11)     | NO   | PRI | NULL    | auto_increment |
+| name  | varchar(30) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+2 rows in set (0.00 sec)
+
+mysql> desc friends; 
++-----------+---------+------+-----+---------+-------+
+| Field     | Type    | Null | Key | Default | Extra |
++-----------+---------+------+-----+---------+-------+
+| user_id   | int(11) | YES  | MUL | NULL    |       |
+| friend_id | int(11) | YES  | MUL | NULL    |       |
++-----------+---------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> desc images; desc tags;
++------------+---------+------+-----+---------+-------+
+| Field      | Type    | Null | Key | Default | Extra |
++------------+---------+------+-----+---------+-------+
+| id         | int(11) | NO   | PRI | NULL    |       |
+| image_user | int(11) | YES  | MUL | NULL    |       |
++------------+---------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
++----------+---------+------+-----+---------+-------+
+| Field    | Type    | Null | Key | Default | Extra |
++----------+---------+------+-----+---------+-------+
+| image_id | int(11) | YES  | MUL | NULL    |       |
+| tagged   | int(11) | YES  | MUL | NULL    |       |
++----------+---------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+//1) Find image that has been tagged most no of times.
+
+mysql> select image_id,no_of_times_tagged from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as tmp where no_of_times_tagged = (select max(no_of_times_tagged) from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as tmp);
+
+select image_id,count(tagged) as no_of_times_tagged from tags group by image_id having no_of_times_tagged = (select max(no_of_times_tagged) from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as temp);
+
+
+
++----------+--------------------+
+| image_id | no_of_times_tagged |
++----------+--------------------+
+|        2 |                  2 |
+|        7 |                  2 |
++----------+--------------------+
+2 rows in set (0.00 sec)
+
+//2) Find all images belonging to the friends of a particular user.
+
+mysql> select user_id,friend_id,id from friends inner join images on friends.friend_id = images.image_user order by user_id;
+
++---------+-----------+----+
+| user_id | friend_id | id |
++---------+-----------+----+
+|       1 |         3 |  5 |
+|       1 |         3 | 10 |
+|       1 |         5 |  1 |
+|       1 |         5 |  6 |
+|       1 |         5 |  7 |
+|       1 |         6 |  2 |
+|       1 |         6 |  8 |
+|       4 |         5 |  1 |
+|       4 |         5 |  6 |
+|       4 |         5 |  7 |
+|       5 |         3 |  5 |
+|       5 |         3 | 10 |
++---------+-----------+----+
+12 rows in set (0.00 sec)
+
+//3)Find all friends of  a particular user (e.g 1) who has tagged him in all his pics.
+
+select distinct users.name from friends join images join tags join users on image_user = friend_id where images.image_user in (Select friends.friend_id from friends where user_id = 1) AND tags.image_id = images.id AND tags.tagged = user_id AND users.id = user_id group by images.id;
++---------+
+| name    |
++---------+
+| Avinash |
+| Aisha   |
++---------+
+2 rows in set (0.00 sec)
+
+//4) Find friend of a particular user (Say, userA) who have tagged him most no. of times.
+
+
+select users.name,count(distinct image_id) as "total_tags" from friends join images join tags join users on image_user = friend_id where images.id = tags.image_id AND tagged = user_id AND users.id = friend_id AND image_user in (select friend_id from friends where user_id = 1) group by image_user order by count(distinct image_id);
++--------+------------+
+| name   | total_tags |
++--------+------------+
+| Aisha  |          1 |
+| Kanika |          2 |
+| Aastha |          2 |
++--------+------------+
+
+
+
+
+
+
+
