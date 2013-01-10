@@ -35,12 +35,7 @@ mysql> desc images; desc tags;
 
 //1) Find image that has been tagged most no of times.
 
-mysql> select image_id,no_of_times_tagged from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as tmp where no_of_times_tagged = (select max(no_of_times_tagged) from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as tmp);
-
-select image_id,count(tagged) as no_of_times_tagged from tags group by image_id having no_of_times_tagged = (select max(no_of_times_tagged) from (select image_id,count(tagged) as no_of_times_tagged from tags group by image_id) as temp);
-
-
-
+select image_id,count(tagged) as no_of_times_tagged from tags group by image_id having no_of_times_tagged = (select count(tagged) as no_of_times_tagged from tags group by image_id order by no_of_times_tagged desc limit 1);
 +----------+--------------------+
 | image_id | no_of_times_tagged |
 +----------+--------------------+
@@ -48,6 +43,7 @@ select image_id,count(tagged) as no_of_times_tagged from tags group by image_id 
 |        7 |                  2 |
 +----------+--------------------+
 2 rows in set (0.00 sec)
+
 
 //2) Find all images belonging to the friends of a particular user.
 
