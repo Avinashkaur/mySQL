@@ -1,0 +1,69 @@
+mysql> load data infile '/home/sushant/mysql/email_campaign/data.csv' into table email_campaign fields terminated by ',' lines terminated by '\n' (email,phone,city);
+Query OK, 200 rows affected, 2 warnings (0m.04 sec)
+Records: 200  Deleted: 0  Skipped: 0  Warnings: 2
+
+//What all cities did people respond from
+mysql> select distinct city from email_campaign;
++-----------+
+| city      |
++-----------+
+|  Lucknow  |
+|  Chennai  |
+|  Kolkatta |
+|  Delhi    |
+|  Mumbai   |
++-----------+
+5 rows in set (0.00 sec)
+
+//How many people responded from each city
+
+mysql> select city,count(distinct email) from email_campaign
+    -> group by city;
++-----------+-----------------------+
+| city      | count(distinct email) |
++-----------+-----------------------+
+|  Chennai  |                    42 |
+|  Delhi    |                    40 |
+|  Kolkatta |                    38 |
+|  Lucknow  |                    39 |
+|  Mumbai   |                    41 |
++-----------+-----------------------+
+5 rows in set (0.00 sec)
+
+//Which city were the maximum respondents from?
+mysql> select count(distinct email) as no_of_responses,city from email_campaign group by city having 
+    -> no_of_responses = (select count(distinct email) as no_of_responses from email_campaign group by city order by no_of_responses desc limit 1);
+
++-----------------+----------+
+| no_of_responses | city     |
++-----------------+----------+
+|              42 |  Chennai |
++-----------------+----------+
+1 row in set (0.00 sec)
+
+
+//What all email domains did people respond from ?
+
+mysql> select distinct substring_index(email,'@',-1) as domains from email_campaign;
++--------------+
+| domains      |
++--------------+
+| hotmail.com  |
+| yahoo.com    |
+| me.com       |
+| gmail.com    |
++--------------+
+4 rows in set (0.00 sec)
+
+//Which is the most popular email domain among the respondents ?
+
+mysql> select distinct substring_index(email,'@',-1) as domains,count(distinct email) as no_of_users from email_campaign group by domains having no_of_users = (select  count(distinct email) as no_of_users from email_campaign group by substring_index(email,'@',-1) order by no_of_users desc limit 1);  
++------------+-------------+
+| domains    | no_of_users |
++------------+-------------+
+| me.com     |          51 |
+| yahoo.com  |          51 |
++------------+-------------+
+2 rows in set (0.00 sec)
+
+
