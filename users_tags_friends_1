@@ -80,7 +80,7 @@ select distinct users.name from friends join images join tags join users on imag
 
 //4) Find friend of a particular user (Say, userA) who have tagged him most no. of times.
 
-mysql> select users.name,count(distinct image_id) as total_tags from friends join images join tags join users on image_user = friend_id and images.id = tags.image_id and tagged = user_id and users.id = friend_id where image_user in (select friend_id from friends where user_id = 1) group by image_user order by count(distinct image_id) desc limit 2;
+mysql>  select users.name,count(distinct image_id) as "total_tags" from friends join images join tags join users on image_user = friend_id where images.id = tags.image_id AND tagged = user_id AND users.id = friend_id AND image_user in (select friend_id from friends where user_id = 1) group by image_user having total_tags = (select count(distinct image_id) as "total_tags" from friends join images join tags on image_user = friend_id where images.id = tags.image_id AND tagged = user_id AND image_user in (select friend_id from friends where user_id = 1) group by image_user order by count(distinct image_id) desc limit 1);
 +--------+------------+
 | name   | total_tags |
 +--------+------------+
@@ -88,34 +88,3 @@ mysql> select users.name,count(distinct image_id) as total_tags from friends joi
 | Aastha |          2 |
 +--------+------------+
 2 rows in set (0.00 sec)
-
-
-
-mysql> select users.name,count(distinct image_id) as total_tags from friends join images join tags join users on image_user = friend_id and images.id = tags.image_id and tagged = user_id and users.id = friend_id where tagged = 1 AND image_user in (select friend_id from friends where user_id = 1) group by image_user order by total_tags desc;
-+--------+------------+
-| name   | total_tags |
-+--------+------------+
-| Aastha |          2 |
-| Kanika |          1 |
-| Aisha  |          1 |
-+--------+------------+
-3 rows in set (0.00 sec)
-
-
-select users.name,count(distinct image_id) as total_tags from
-    -> friends join images join tags join users on
-    -> image_user = friend_id AND
-    -> images.id = tags.image_id AND
-    -> tagged = user_id AND
-    -> users.id = friend_id
-    -> where image_user in (select friend_id from friends where user_id = 1)
-    -> group by image_user
-    -> having total_tags = (select count(distinct image_id) as total_tags from images group by image_user order by total_tags limit 1);
-
-
-
-
-
-
-
-
