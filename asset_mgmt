@@ -27,7 +27,6 @@ mysql> desc employees; desc assigned_assets; desc assets;
 | year               | int(11)     | YES  |     | NULL    |       |
 | price              | float       | YES  |     | NULL    |       |
 | purchase_date      | date        | YES  |     | NULL    |       |
-| asigned            | varchar(5)  | YES  |     | NULL    |       |
 | warranty_in_months | int(11)     | YES  |     | 12      |       |
 +--------------------+-------------+------+-----+---------+-------+
 9 rows in set (0.00 sec)
@@ -57,19 +56,19 @@ mysql> select * from employees; select * from assigned_assets; select * from ass
 +------+--------+--------------+-------------+--------------+
 7 rows in set (0.00 sec)
 
-+-----+-------------+---------+------------+------+-------+---------------+---------+--------------------+
-| id  | name        | make    | model      | year | price | purchase_date | asigned | warranty_in_months |
-+-----+-------------+---------+------------+------+-------+---------------+---------+--------------------+
-| v28 | laptop B    | hp      | hp123      | 2010 | 40000 | 2011-01-01    | no      |                 12 |
-| v32 | laptop A    | asus    | p52f       | 2011 | 38000 | 2011-01-01    | yes     |                 12 |
-| v37 | projector A | toshiba | 4x34       | 2011 | 42000 | 2011-08-15    | yes     |                 18 |
-| v39 | printer A   | hp      | inkjet4xpp | 2011 | 10800 | 2011-08-15    | yes     |                  6 |
-| v50 | iPhone B    | apple   | 3s         | 2010 | 39800 | 2011-01-01    | yes     |                 12 |
-| v55 | printer B   | xerox   | laserXX    | 2011 | 15600 | 2011-09-10    | no      |                  8 |
-| v65 | iPhone A    | apple   | 4s         | 2011 | 39800 | 2011-01-01    | yes     |                 24 |
-| v94 | laptop N2   | sony    | vaio98     | 2012 | 36900 | 2012-12-31    | no      |                 12 |
-| v98 | laptop N1   | lenovo  | lv678      | 2012 | 32000 | 2012-12-31    | no      |                 12 |
-+-----+-------------+---------+------------+------+-------+---------------+---------+--------------------+
++-----+-------------+---------+------------+------+-------+---------------+--------------------+
+| id  | name        | make    | model      | year | price | purchase_date | warranty_in_months |
++-----+-------------+---------+------------+------+-------+---------------+--------------------+
+| v28 | laptop B    | hp      | hp123      | 2010 | 40000 | 2011-01-01    |         12         |
+| v32 | laptop A    | asus    | p52f       | 2011 | 38000 | 2011-01-01    |         12         |
+| v37 | projector A | toshiba | 4x34       | 2011 | 42000 | 2011-08-15    |         18         |
+| v39 | printer A   | hp      | inkjet4xpp | 2011 | 10800 | 2011-08-15    |          6         |
+| v50 | iPhone B    | apple   | 3s         | 2010 | 39800 | 2011-01-01    |         12         |
+| v55 | printer B   | xerox   | laserXX    | 2011 | 15600 | 2011-09-10    |          8         |
+| v65 | iPhone A    | apple   | 4s         | 2011 | 39800 | 2011-01-01    |         24         |
+| v94 | laptop N2   | sony    | vaio98     | 2012 | 36900 | 2012-12-31    |          2         |
+| v98 | laptop N1   | lenovo  | lv678      | 2012 | 32000 | 2012-12-31    |          2         |
++-----+-------------+---------+------------+------+-------+---------------+--------------------+
 9 rows in set (0.00 sec)
 
 
@@ -89,14 +88,14 @@ mysql> select name,emp_id,count(emp_id) as no_of_times_alotted from assigned_ass
 
 2))Identify the name of the employee who currently has the maximum number of assets as of today
 
-mysql> select name,emp_id,alotted_date,return_date,count(emp_id) as no_of_times_allotted from assigned_assets join employees on assigned_assets.emp_id = employees.id where return_date is null group by emp_id order by no_of_times_allotted;
-+-------+--------+--------------+-------------+----------------------+
-| name  | emp_id | alotted_date | return_date | no_of_times_allotted |
-+-------+--------+--------------+-------------+----------------------+
-| Alice |      1 | 2011-04-01   | NULL        |                    1 |
-| Bob   |      5 | 2011-01-01   | NULL        |                    2 |
-+-------+--------+--------------+-------------+----------------------+
-2 rows in set (0.00 sec)
+mysql> select emp_id,employees.name,count(assigned_assets.id) as no_of_times_allotted from employees inner join assigned_assets on employees.id = assigned_assets.emp_id where return_date is null and emp_id is not null group by emp_id having no_of_times_allotted = (select count(id) as times from assigned_assets where return_date is null AND emp_id is not null group by emp_id order by times desc limit 1);
++--------+------+----------------------+
+| emp_id | name | no_of_times_allotted |
++--------+------+----------------------+
+|      5 | Bob  |                    2 |
++--------+------+----------------------+
+1 row in set (0.00 sec)
+
 
 3))Find name and period of all the employees who have used a Laptop - let’s say laptop A - since it was bought by the company.
 
@@ -113,41 +112,46 @@ mysql> select employees.name, emp_id,assets.name,alotted_date,return_date from e
 
 4))Find the list of assets that are currently not assigned to anyone hence lying with the asset manage ( HR)
 
-mysql> select id,name from assets where asigned = 'no';
-+-----+-----------+
-| id  | name      |
-+-----+-----------+
-| v28 | laptop B  |
-| v55 | printer B |
-| v94 | laptop N2 |
-| v98 | laptop N1 |
-+-----+-----------+
-4 rows in set (0.00 sec)
+mysql> select assets.id, assets.name from assets left join assigned_assets using (id)
+    -> where emp_id is null;
++-----+-------------+
+| id  | name        |
++-----+-------------+
+| v37 | projector A |
+| v39 | printer A   |
+| v55 | printer B   |
+| v94 | laptop N2   |
+| v98 | laptop N1   |
++-----+-------------+
+5 rows in set (0.00 sec)
+
 
 
 5)) An employee say Bob is leaving the company, write a query to get the list of assets he should be returning to the company.
 
-mysql> select emp_id,employees.name,assets.name from employees join assigned_assets join assets on employees.id = assigned_assets.emp_id AND assigned_assets.id = assets.id where employees.name = "Bob" AND return_date is not null;
+mysql>  select emp_id,employees.name,assets.name from employees join assigned_assets join assets on employees.id = assigned_assets.emp_id AND assigned_assets.id = assets.id where employees.name = "Bob" AND return_date is null;
 +--------+------+----------+
 | emp_id | name | name     |
 +--------+------+----------+
-|      5 | Bob  | laptop B |
+|      5 | Bob  | iPhone B |
+|      5 | Bob  | laptop A |
 +--------+------+----------+
-1 row in set (0.00 sec)
+2 rows in set (0.00 sec)
+
 
 
 6)) Write a query to find assets which are out of warranty
 
 mysql> select * from assets where purchase_date <= '2011-12-31' AND warranty_in_months <= 12;
-+-----+-----------+-------+------------+------+-------+---------------+---------+--------------------+
-| id  | name      | make  | model      | year | price | purchase_date | asigned | warranty_in_months |
-+-----+-----------+-------+------------+------+-------+---------------+---------+--------------------+
-| v28 | laptop B  | hp    | hp123      | 2010 | 40000 | 2011-01-01    | no      |                 12 |
-| v32 | laptop A  | asus  | p52f       | 2011 | 38000 | 2011-01-01    | yes     |                 12 |
-| v39 | printer A | hp    | inkjet4xpp | 2011 | 10800 | 2011-08-15    | yes     |                  6 |
-| v50 | iPhone B  | apple | 3s         | 2010 | 39800 | 2011-01-01    | yes     |                 12 |
-| v55 | printer B | xerox | laserXX    | 2011 | 15600 | 2011-09-10    | no      |                  8 |
-+-----+-----------+-------+------------+------+-------+---------------+---------+--------------------+
++-----+-----------+-------+------------+------+-------+---------------+--------------------+
+| id  | name      | make  | model      | year | price | purchase_date | warranty_in_months |
++-----+-----------+-------+------------+------+-------+---------------+--------------------+
+| v28 | laptop B  | hp    | hp123      | 2010 | 40000 | 2011-01-01    |                 12 |
+| v32 | laptop A  | asus  | p52f       | 2011 | 38000 | 2011-01-01    |                 12 |
+| v39 | printer A | hp    | inkjet4xpp | 2011 | 10800 | 2011-08-15    |                  6 |
+| v50 | iPhone B  | apple | 3s         | 2010 | 39800 | 2011-01-01    |                 12 |
+| v55 | printer B | xerox | laserXX    | 2011 | 15600 | 2011-09-10    |                  8 |
++-----+-----------+-------+------------+------+-------+---------------+--------------------+
 5 rows in set (0.00 sec)
 
 
